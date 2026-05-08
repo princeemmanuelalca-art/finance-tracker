@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Finance Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#0a0a0b;
+    --surface:#111113;
+    --surface2:#18181b;
+    --border:#222226;
+    --text:#f0f0f0;
+    --muted:#666;
+    --faint:#333;
+    --green:#22c55e;
+    --red:#ef4444;
+    --blue:#3b82f6;
+    --yellow:#f59e0b;
+    --mono:'Space Mono',monospace;
+    --sans:'DM Sans',sans-serif;
+  }
+  html,body{height:100%;overflow-x:hidden;background:var(--bg)}
+  body{color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.5}
+  #app{max-width:430px;margin:0 auto;padding:16px;min-height:100vh}
+
+  /* SETUP */
+  .setup-wrap{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding-bottom:40px}
+  .logo{font-family:var(--mono);font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .setup-title{font-size:28px;font-weight:700;line-height:1.2;margin-bottom:6px}
+  .setup-sub{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+  .setup-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px}
+  .field-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:var(--mono)}
+  .field-hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .field-hint a{color:var(--blue);text-decoration:none}
+
+  /* INPUTS */
+  input[type="text"],input[type="password"]{
+    width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+    padding:13px 14px;color:var(--text);font-size:15px;font-family:var(--sans);outline:none;
+    -webkit-appearance:none;transition:border-color .15s
+  }
+  input:focus{border-color:#444}
+  input::placeholder{color:var(--muted)}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:10px;padding:13px 18px;font-size:15px;font-weight:600;font-family:var(--sans);cursor:pointer;transition:opacity .1s,transform .1s;white-space:nowrap}
+  .btn:active{opacity:.8;transform:scale(.98)}
+  .btn-primary{background:var(--text);color:var(--bg)}
+  .btn-ghost{background:var(--surface2);color:var(--text)}
+  .btn-danger{background:#1f0707;color:var(--red);border:1px solid #3d0e0e}
+  .btn-sm{padding:9px 13px;font-size:13px;border-radius:8px}
+  .btn-full{width:100%}
+  .btn-del{background:#1f0707;color:var(--red);padding:7px 11px;font-size:12px;border-radius:7px;border:none;cursor:pointer;font-family:var(--sans);font-weight:600;flex-shrink:0}
+  .btn-del:active{opacity:.7}
+
+  /* HEADER */
+  .main-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-top:4px}
+  .main-logo{font-family:var(--mono);font-size:13px;letter-spacing:2px;color:var(--muted)}
+  .header-actions{display:flex;gap:8px}
+
+  /* DASHBOARD */
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+  .dash-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 10px;text-align:center}
+  .dash-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:var(--mono);margin-bottom:5px}
+  .dash-val{font-size:17px;font-weight:700;font-family:var(--mono);letter-spacing:-0.5px}
+  .c-green{color:var(--green)}
+  .c-red{color:var(--red)}
+  .c-blue{color:var(--blue)}
+
+  /* SYNC */
+  .sync-bar{font-size:11px;color:var(--muted);text-align:center;margin-bottom:10px;font-family:var(--mono);letter-spacing:.5px;height:16px}
+  .sync-bar.ok{color:var(--green)}
+  .sync-bar.err{color:var(--red)}
+
+  /* TABS */
+  .tab-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+  .tab{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 6px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;text-align:center;font-family:var(--sans);transition:all .15s}
+  .tab.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+  /* ADD */
+  .add-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+  .add-hint{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+  .add-row{display:flex;gap:8px}
+  .add-row input{flex:1}
+  .feedback-wrap{margin-top:10px}
+  .feedback-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px}
+  .feedback-item .f-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+  .feedback-item .f-type{font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:var(--mono);color:var(--muted)}
+  .feedback-item .f-amt{font-size:17px;font-weight:700;font-family:var(--mono)}
+  .feedback-item .f-note{font-size:12px;color:var(--muted);margin-top:2px}
+  .feedback-item .f-cat{font-size:12px;color:var(--muted)}
+  .loading-text{font-size:13px;color:var(--muted);font-family:var(--mono);padding:10px 0;letter-spacing:1px}
+
+  /* LIST */
+  .date-sep{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--faint);font-family:var(--mono);margin:14px 0 6px;padding-left:2px}
+  .tx-row{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+  .tx-cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .tx-body{flex:1;min-width:0}
+  .tx-cat{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tx-note{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .tx-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .tx-amt{font-size:15px;font-weight:700;font-family:var(--mono)}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+  .empty-icon{font-size:32px;margin-bottom:8px;opacity:.3}
+
+  /* SUMMARY */
+  .sum-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px}
+  .sum-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-family:var(--mono);margin-bottom:12px}
+  .cat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+  .cat-row:last-child{border-bottom:none}
+  .cat-name{font-size:13px;color:var(--text)}
+  .cat-sub{font-size:11px;color:var(--muted)}
+  .cat-amt{font-size:14px;font-weight:700;font-family:var(--mono)}
+  .sum-bar{height:3px;border-radius:2px;background:var(--border);margin-top:8px;overflow:hidden}
+  .sum-bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
+
+  /* AI */
+  .ai-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+  .ai-hint{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+  .ai-answer{background:var(--surface2);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;padding:13px 14px;font-size:14px;line-height:1.7;white-space:pre-wrap;margin-top:10px;color:var(--text)}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;backdrop-filter:blur(4px)}
+  .modal-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;width:100%;max-width:380px}
+  .modal-title{font-size:16px;font-weight:700;margin-bottom:16px}
+  .modal-field{margin-bottom:12px}
+  .modal-actions{display:flex;gap:8px;margin-top:16px}
+
+  .hidden{display:none!important}
+  .mt8{margin-top:8px}
+  .mt12{margin-top:12px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SETUP SCREEN -->
+<div id="setupScreen">
+  <div class="setup-wrap">
+    <div class="logo">Finance Tracker</div>
+    <div class="setup-title">Track every peso.<br>Know where it goes.</div>
+    <div class="setup-sub">Powered by Groq AI + Google Sheets.<br>Your API key stays on this device only.</div>
+    <div class="setup-card">
+      <div class="field-label">Groq API Key</div>
+      <input type="password" id="apiKeyInput" placeholder="gsk_..." onkeydown="if(event.key==='Enter')saveApiKey()">
+      <div class="field-hint">Get a free key at <a href="https://groq.com" target="_blank">groq.com</a></div>
+      <button class="btn btn-primary btn-full mt12" onclick="saveApiKey()">Get Started</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div id="mainScreen" class="hidden">
+  <div class="main-header">
+    <div class="main-logo">FINTRK</div>
+    <div class="header-actions">
+      <button class="btn btn-ghost btn-sm" onclick="loadFromSheet()">↻ Sync</button>
+      <button class="btn btn-ghost btn-sm" onclick="showSettings()">⚙</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dash-grid">
+    <div class="dash-card">
+      <div class="dash-label">Income</div>
+      <div class="dash-val c-green" id="dashIncome">₱0</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-label">Expenses</div>
+      <div class="dash-val c-red" id="dashExpense">₱0</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-label">Balance</div>
+      <div class="dash-val c-blue" id="dashBalance">₱0</div>
+    </div>
+  </div>
+
+  <div id="syncStatus" class="sync-bar">—</div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('Add')" id="tabAdd">Add</div>
+    <div class="tab" onclick="switchTab('List')" id="tabList">List</div>
+    <div class="tab" onclick="switchTab('Summary')" id="tabSummary">Summary</div>
+    <div class="tab" onclick="switchTab('Ai')" id="tabAi">Ask AI</div>
+  </div>
+
+  <!-- ADD TAB -->
+  <div id="viewAdd">
+    <div class="add-card">
+      <div class="add-hint">Type naturally — e.g. <em>"spent ₱200 on lunch"</em> or <em>"received ₱5000 salary"</em></div>
+      <div class="add-row">
+        <input type="text" id="nlInput" placeholder="What happened?" onkeydown="if(event.key==='Enter')addTransaction()">
+        <button class="btn btn-primary" onclick="addTransaction()">Add</button>
+      </div>
+      <div id="addFeedback" class="feedback-wrap"></div>
+    </div>
+  </div>
+
+  <!-- LIST TAB -->
+  <div id="viewList" class="hidden">
+    <div id="txList"></div>
+  </div>
+
+  <!-- SUMMARY TAB -->
+  <div id="viewSummary" class="hidden">
+    <div class="sum-card">
+      <div class="sum-title">Expenses this month</div>
+      <div id="catExpSummary"></div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-title">Income this month</div>
+      <div id="catIncSummary"></div>
+    </div>
+  </div>
+
+  <!-- AI TAB -->
+  <div id="viewAi" class="hidden">
+    <div class="ai-card">
+      <div class="ai-hint">Ask anything — e.g. <em>"how much did I spend this week?"</em> or <em>"what's my biggest expense?"</em></div>
+      <div class="add-row">
+        <input type="text" id="aiInput" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')askAI()">
+        <button class="btn btn-primary" onclick="askAI()">Ask</button>
+      </div>
+      <div id="aiAnswer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-title">Settings</div>
+    <div class="modal-field">
+      <div class="field-label">Groq API Key</div>
+      <input type="password" id="settingsKey" placeholder="gsk_...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="saveSettings()">Save</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeSettings()">Close</button>
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn btn-danger btn-full" onclick="clearLocalCache()">Clear Local Cache</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const GROQ_URL   = "https://api.groq.com/openai/v1/chat/completions";
+const MODEL      = "llama-3.3-70b-versatile";
+const SHEET_URL  = "https://script.google.com/macros/s/AKfycbzMQeRWYUAQnrzH0L2pLgIUslFmfCfoOBGQxMLJ7lvAMT_V0VYTjC2D_VKCXz64EUYofQ/exec";
+const SHEET_TOKEN = "fintrk_secret_2026";
+
+const INCOME_CATS  = ["Salary","Freelance","Investment","Gift","Other Income"];
+const EXPENSE_CATS = ["Food","Transport","Shopping","Health","Entertainment","Bills","Gumroad","Other"];
+
+// Category colors
+const CAT_COLORS = {
+  Food:"#f59e0b", Transport:"#3b82f6", Shopping:"#a855f7", Health:"#22c55e",
+  Entertainment:"#ec4899", Bills:"#ef4444", Gumroad:"#06b6d4", Other:"#6b7280",
+  Salary:"#22c55e", Freelance:"#3b82f6", Investment:"#f59e0b", Gift:"#ec4899",
+  "Other Income":"#6b7280"
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+var txCache = [];
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function getKey()    { return localStorage.getItem("groq_key") || ""; }
+function todayStr()  { return new Date().toISOString().slice(0,10); }
+function thisMonth() { return new Date().toISOString().slice(0,7); }
+function esc(s)      { return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function fmtMoney(n) {
+  var v = parseFloat(n||0);
+  var abs = Math.abs(v).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,",");
+  return "₱" + abs;
+}
+
+function catColor(cat) {
+  return CAT_COLORS[cat] || "#6b7280";
+}
+
+// ─── SYNC STATUS ─────────────────────────────────────────────────────────────
+function setSyncStatus(msg, type) {
+  var el = document.getElementById("syncStatus");
+  el.textContent = msg;
+  el.className = "sync-bar" + (type ? " " + type : "");
+}
+
+// ─── SHEET OPS ────────────────────────────────────────────────────────────────
+async function loadFromSheet() {
+  setSyncStatus("Syncing with Google Sheets...");
+  try {
+    var res = await fetch(SHEET_URL + "?token=" + SHEET_TOKEN);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    var data = await res.json();
+    txCache = data.map(function(r) {
+      return {
+        id:       (r.id||"").toString(),
+        date:     (r.date||"").toString(),
+        type:     (r.type||"").toString(),
+        amount:   parseFloat(r.amount)||0,
+        category: (r.category||"").toString(),
+        note:     (r.note||"").toString()
+      };
+    }).filter(function(r){ return r.id; });
+    setSyncStatus("Synced · " + txCache.length + " transactions", "ok");
+    renderAll();
+  } catch(e) {
+    setSyncStatus("Sync failed: " + e.message, "err");
+  }
+}
+
+async function saveToSheet(action, tx) {
+  var body = Object.assign({ action: action, token: SHEET_TOKEN }, tx);
+  var res = await fetch(SHEET_URL, {
+    method: "POST",
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error("Sheet error " + res.status);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+  if (getKey()) { showMain(); loadFromSheet(); }
+  else           { showSetup(); }
+}
+
+function showSetup() {
+  document.getElementById("setupScreen").classList.remove("hidden");
+  document.getElementById("mainScreen").classList.add("hidden");
+}
+
+function showMain() {
+  document.getElementById("setupScreen").classList.add("hidden");
+  document.getElementById("mainScreen").classList.remove("hidden");
+}
+
+function saveApiKey() {
+  var k = document.getElementById("apiKeyInput").value.trim();
+  if (!k) { alert("Please enter your Groq API key."); return; }
+  localStorage.setItem("groq_key", k);
+  showMain();
+  loadFromSheet();
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  ["Add","List","Summary","Ai"].forEach(function(t) {
+    document.getElementById("view"+t).classList.add("hidden");
+    document.getElementById("tab"+t).classList.remove("active");
+  });
+  document.getElementById("view"+name).classList.remove("hidden");
+  document.getElementById("tab"+name).classList.add("active");
+  renderAll();
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderAll() {
+  renderDashboard();
+  renderList();
+  renderSummary();
+}
+
+function renderDashboard() {
+  var month = thisMonth();
+  var inc = 0, exp = 0;
+  txCache.forEach(function(t) {
+    if ((t.date||"").startsWith(month)) {
+      if (t.type === "income") inc += Number(t.amount)||0;
+      else                     exp += Number(t.amount)||0;
+    }
+  });
+  document.getElementById("dashIncome").textContent  = fmtMoney(inc);
+  document.getElementById("dashExpense").textContent = fmtMoney(exp);
+  var bal = inc - exp;
+  var balEl = document.getElementById("dashBalance");
+  balEl.textContent = fmtMoney(bal);
+  balEl.className = "dash-val " + (bal >= 0 ? "c-blue" : "c-red");
+}
+
+function renderList() {
+  var el = document.getElementById("txList");
+  if (!txCache.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">💸</div>No transactions yet.<br>Add one above!</div>';
+    return;
+  }
+  var sorted = txCache.slice().sort(function(a,b){ return (b.date||"").localeCompare(a.date||""); });
+  var grouped = {};
+  sorted.forEach(function(t) {
+    var d = t.date || "Unknown";
+    if (!grouped[d]) grouped[d] = [];
+    grouped[d].push(t);
+  });
+  var html = "";
+  Object.keys(grouped).sort(function(a,b){ return b.localeCompare(a); }).forEach(function(date) {
+    var label = formatDateLabel(date);
+    html += '<div class="date-sep">' + esc(label) + '</div>';
+    grouped[date].forEach(function(t) {
+      var color = catColor(t.category);
+      var amtClass = t.type === "income" ? "c-green" : "c-red";
+      var sign = t.type === "income" ? "+" : "−";
+      html +=
+        '<div class="tx-row">' +
+          '<div class="tx-cat-dot" style="background:'+color+'"></div>' +
+          '<div class="tx-body">' +
+            '<div class="tx-cat">' + esc(t.category||"Other") + '</div>' +
+            (t.note ? '<div class="tx-note">' + esc(t.note) + '</div>' : '') +
+          '</div>' +
+          '<div class="tx-right">' +
+            '<div class="tx-amt ' + amtClass + '">' + sign + fmtMoney(t.amount) + '</div>' +
+            '<button class="btn-del" onclick="deleteTx(\'' + t.id + '\')">Del</button>' +
+          '</div>' +
+        '</div>';
+    });
+  });
+  el.innerHTML = html;
+}
+
+function formatDateLabel(dateStr) {
+  try {
+    var d = new Date(dateStr + "T00:00:00");
+    var today = todayStr();
+    var yest  = new Date(); yest.setDate(yest.getDate()-1);
+    var yestStr = yest.toISOString().slice(0,10);
+    if (dateStr === today)   return "Today";
+    if (dateStr === yestStr) return "Yesterday";
+    return d.toLocaleDateString("en-PH",{weekday:"short",month:"short",day:"numeric"});
+  } catch(e) { return dateStr; }
+}
+
+function renderSummary() {
+  var month = thisMonth();
+  var expCats = {}, incCats = {};
+  txCache.forEach(function(t) {
+    if (!(t.date||"").startsWith(month)) return;
+    if (t.type === "expense") {
+      expCats[t.category] = (expCats[t.category]||0) + (Number(t.amount)||0);
+    } else {
+      incCats[t.category] = (incCats[t.category]||0) + (Number(t.amount)||0);
+    }
+  });
+  renderCatBlock("catExpSummary", expCats, "expense");
+  renderCatBlock("catIncSummary", incCats, "income");
+}
+
+function renderCatBlock(elId, cats, type) {
+  var el = document.getElementById(elId);
+  var entries = Object.entries(cats).sort(function(a,b){ return b[1]-a[1]; });
+  if (!entries.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px 0">No data this month</div>';
+    return;
+  }
+  var max = entries[0][1];
+  var html = entries.map(function(e) {
+    var pct = max > 0 ? Math.round((e[1]/max)*100) : 0;
+    var color = catColor(e[0]);
+    var amtClass = type === "income" ? "c-green" : "c-red";
+    return '<div class="cat-row">' +
+      '<div><div class="cat-name">' + esc(e[0]) + '</div></div>' +
+      '<div style="text-align:right">' +
+        '<div class="cat-amt ' + amtClass + '">' + fmtMoney(e[1]) + '</div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="sum-bar"><div class="sum-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div>';
+  }).join("");
+  el.innerHTML = html;
+}
+
+// ─── ADD TRANSACTION ──────────────────────────────────────────────────────────
+async function addTransaction() {
+  var input = document.getElementById("nlInput");
+  var text  = input.value.trim();
+  if (!text) return;
+  var key = getKey();
+  if (!key) { alert("No API key set. Go to Settings."); return; }
+
+  var fb = document.getElementById("addFeedback");
+  fb.innerHTML = '<div class="loading-text">Parsing...</div>';
+  input.disabled = true;
+
+  var systemMsg =
+    'You are a finance transaction parser for a Filipino user. Extract transaction details and return ONLY valid JSON with these exact fields:\n' +
+    '- type: "income" or "expense"\n' +
+    '- amount: number (Philippine Peso, no currency symbol)\n' +
+    '- category: string (pick closest match)\n' +
+    '- note: string (brief description, max 6 words)\n' +
+    '- date: YYYY-MM-DD\n\n' +
+    'Income categories: ' + INCOME_CATS.join(", ") + '\n' +
+    'Expense categories: ' + EXPENSE_CATS.join(", ") + '\n' +
+    'Use today\'s date ' + todayStr() + ' if not specified.\n' +
+    'Return ONLY the JSON object. No markdown. No explanation.';
+
+  try {
+    var res = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "Authorization":"Bearer "+key },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role:"system", content:systemMsg },
+          { role:"user",   content:text }
+        ],
+        temperature: 0
+      })
+    });
+    if (!res.ok) throw new Error("Groq error " + res.status);
+    var data = await res.json();
+    var raw  = (data.choices?.[0]?.message?.content || "{}").replace(/```json\s*/i,"").replace(/```\s*$/,"").trim();
+    var parsed = JSON.parse(raw);
+    if (!parsed.type || parsed.amount == null) throw new Error("Could not parse transaction");
+
+    var tx = {
+      id:       Date.now().toString(),
+      type:     parsed.type,
+      amount:   Math.abs(Number(parsed.amount)),
+      category: parsed.category || "Other",
+      note:     parsed.note || text,
+      date:     parsed.date || todayStr()
+    };
+
+    fb.innerHTML = '<div class="loading-text">Saving to Google Sheets...</div>';
+    await saveToSheet("add", tx);
+    txCache.unshift(tx);
+
+    var amtClass = tx.type === "income" ? "c-green" : "c-red";
+    var sign     = tx.type === "income" ? "+" : "−";
+    var color    = catColor(tx.category);
+    fb.innerHTML =
+      '<div class="feedback-item">' +
+        '<div class="f-top">' +
+          '<span class="f-type" style="color:' + color + '">' + esc(tx.category) + '</span>' +
+          '<span class="f-amt ' + amtClass + '">' + sign + fmtMoney(tx.amount) + '</span>' +
+        '</div>' +
+        '<div class="f-note">' + esc(tx.note) + ' · ' + esc(tx.date) + '</div>' +
+      '</div>';
+
+    input.value = "";
+    renderAll();
+    setSyncStatus("Saved ✓", "ok");
+  } catch(e) {
+    fb.innerHTML = '<div class="feedback-item" style="color:var(--red)">Error: ' + esc(e.message) + '</div>';
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+async function deleteTx(id) {
+  if (!confirm("Delete this transaction?")) return;
+  setSyncStatus("Deleting...");
+  try {
+    await saveToSheet("delete", { id: id });
+    txCache = txCache.filter(function(t){ return t.id !== id; });
+    renderAll();
+    setSyncStatus("Deleted ✓", "ok");
+  } catch(e) {
+    setSyncStatus("Delete failed: " + e.message, "err");
+  }
+}
+
+// ─── ASK AI ───────────────────────────────────────────────────────────────────
+async function askAI() {
+  var input = document.getElementById("aiInput");
+  var q     = input.value.trim();
+  if (!q) return;
+  var key = getKey();
+  if (!key) { alert("No API key set. Go to Settings."); return; }
+
+  var el = document.getElementById("aiAnswer");
+  el.innerHTML = '<div class="loading-text">Thinking...</div>';
+  input.disabled = true;
+
+  var month = thisMonth();
+  var mTxs  = txCache.filter(function(t){ return (t.date||"").startsWith(month); });
+  var inc   = mTxs.filter(function(t){ return t.type==="income"; }).reduce(function(a,t){ return a+(Number(t.amount)||0); }, 0);
+  var exp   = mTxs.filter(function(t){ return t.type==="expense"; }).reduce(function(a,t){ return a+(Number(t.amount)||0); }, 0);
+
+  var expCatObj = mTxs.filter(function(t){ return t.type==="expense"; }).reduce(function(a,t){
+    a[t.category] = (a[t.category]||0) + (Number(t.amount)||0); return a;
+  }, {});
+  var topExpCats = Object.entries(expCatObj).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5)
+    .map(function(e){ return e[0]+": "+fmtMoney(e[1]); }).join(", ");
+
+  var recent = txCache.slice(0,30).map(function(t){
+    return "- " + (t.date||"?") + " " + (t.type||"?") + " " + fmtMoney(t.amount||0) + " [" + (t.category||"?") + "] " + (t.note||"");
+  }).join("\n");
+
+  var systemMsg =
+    "You are a personal finance assistant for a Filipino user. Answer based ONLY on the transaction data provided. Be concise and use ₱ for peso amounts.\n\n" +
+    "This month (" + month + "): " + mTxs.length + " transactions\n" +
+    "Income: " + fmtMoney(inc) + "\n" +
+    "Expenses: " + fmtMoney(exp) + "\n" +
+    "Net: " + fmtMoney(inc-exp) + "\n" +
+    "Top expense categories: " + (topExpCats||"none") + "\n" +
+    "Total transactions in history: " + txCache.length + "\n\n" +
+    "Recent transactions:\n" + recent;
+
+  try {
+    var res = await fetch(GROQ_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "Authorization":"Bearer "+key },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role:"system", content:systemMsg },
+          { role:"user",   content:q }
+        ],
+        temperature: 0.3
+      })
+    });
+    if (!res.ok) throw new Error("API error " + res.status);
+    var data = await res.json();
+    var ans  = data.choices?.[0]?.message?.content || "No answer.";
+    el.innerHTML = '<div class="ai-answer">' + esc(ans) + '</div>';
+    input.value = "";
+  } catch(e) {
+    el.innerHTML = '<div class="feedback-item" style="color:var(--red)">Error: ' + esc(e.message) + '</div>';
+  } finally {
+    input.disabled = false;
+  }
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+function showSettings() {
+  document.getElementById("settingsKey").value = getKey();
+  document.getElementById("settingsModal").classList.remove("hidden");
+}
+function closeSettings() {
+  document.getElementById("settingsModal").classList.add("hidden");
+}
+function saveSettings() {
+  var k = document.getElementById("settingsKey").value.trim();
+  if (k) localStorage.setItem("groq_key", k);
+  closeSettings();
+}
+function clearLocalCache() {
+  if (!confirm("Clear local cache? Your Google Sheet data stays safe.")) return;
+  txCache = [];
+  renderAll();
+  closeSettings();
+}
+
+// ─── START ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
